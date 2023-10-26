@@ -68,41 +68,14 @@ int getMoyenneNotes(int points[])   // Prend un tableau de points et retourne la
 int *pointsToNotes(int points[])    // Prend un tableau de points et retourne un tableau de notes avec le nombre de points par tranche
 {
     // A TERMINER
-    int *notes = malloc(7 * sizeof(int)); // On alloue de la mémoire pour les notes (j'ai fait un tableau dynamique parce que je ne sais pas pourquoi je n'arrivais pas à faire une fonction qui retourne un tableau statique)
-    for (int i = 0; i < 7; i++) // On initialise le tableau à 0
+    int *notes = malloc(NUMBER_RANGES * sizeof(int)); // On alloue de la mémoire pour les notes (j'ai fait un tableau dynamique parce que je ne sais pas pourquoi je n'arrivais pas à faire une fonction qui retourne un tableau statique)
+    for (int i = 0; i < NUMBER_RANGES; i++) // On initialise le tableau à 0
     {
         notes[i] = 0; 
     }
     for (int i = 0; i < N; i++) // Ca ne marchait pas avec un switch donc j'ai fait ça avec des if
     {
-        if (points[i] >= 60)
-        {
-            notes[6]++;
-        }
-        else if (points[i] >= 50)
-        {
-            notes[5]++;
-        }
-        else if (points[i] >= 40)
-        {
-            notes[4]++;
-        }
-        else if (points[i] >= 30)
-        {
-            notes[3]++;
-        }
-        else if (points[i] >= 20)
-        {
-            notes[2]++;
-        }
-        else if (points[i] >= 10)
-        {
-            notes[1]++;
-        }
-        else
-        {
-            notes[0]++;
-        }
+        notes[(int)points[i]/10]++; // On divise par 10 pour avoir le numéro de la tranche de notes. On applique un int pour arrondir au nombre entier inférieur (ex: 19/10 = 1.9 -> 1)
     }
     return notes;       // On retourne le tableau de notes
 }
@@ -191,9 +164,14 @@ int main()
         isGood = 0; // On remet la variable à 0 pour la prochaine question
     }
     int *notes = pointsToNotes(points); // On mets les points dans des tranches de notes
+    for (int i = 0; i < N; i++)
+    {
+        printf("%d\n", points[i]);
+    }
+    
     for (int i = 0; i < NUMBER_RANGES; i++) // On affiche les points et les notes pour chaque étudiant
     {
-        printf("note %d : %d | %d\n", i + 1, notes[i], i*10);
+        printf("tranche %d : %d | %d-%d\n", i + 1, notes[i], i * 10, i * 10 + 9);
     }
     stats(points, notes);   // On fait apparaitre quelques stats
     graphNuagePoint(notes); // On lance l'affichage du graphique

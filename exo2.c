@@ -55,7 +55,7 @@ int getMinPoints(int points[])  // Prend un tableau de points et retourne le min
     return min;
 }
 
-int getMoyenneNotes(int points[])   // Prend un tableau de points et retourne la moyenne
+int getMoyennePoints(int points[])   // Prend un tableau de points et retourne la moyenne
 {
     int sum = 0;
     for (int i = 0; i < N; i++) // On fait la somme de tous les points
@@ -67,7 +67,6 @@ int getMoyenneNotes(int points[])   // Prend un tableau de points et retourne la
 
 int *pointsToNotes(int points[])    // Prend un tableau de points et retourne un tableau de notes avec le nombre de points par tranche
 {
-    // A TERMINER
     int *notes = malloc(NUMBER_RANGES * sizeof(int)); // On alloue de la mémoire pour les notes (j'ai fait un tableau dynamique parce que je ne sais pas pourquoi je n'arrivais pas à faire une fonction qui retourne un tableau statique)
     for (int i = 0; i < NUMBER_RANGES; i++) // On initialise le tableau à 0
     {
@@ -122,6 +121,45 @@ void graphNuagePoint(int notes[])
         printf("|%d-%d", i * 10, i * 10 + 9);
     }
     printf("| %d  |\n", (NUMBER_RANGES-1)*10);        // 60 (ou autre) est un peu particulier donc on le met en dehors de la boucle
+    printf("------------------------------\n");
+}
+
+void graphBatonPoint(int notes[])
+{
+    for (int i = getMaxNotes(notes); 0 <= i; i--)  // Pour chaque ligne (y a autant de ligne que la valeur max de notes pour faire un graphique responsive)
+    {
+        if (i == 0)     // On fait un affichage différent pour l'étage 0 (avec des +--+)
+        {
+            printf("   ");  // On affiche 3 espaces pour aligner le graphique vu que normalement on affiche "0 |"
+            for (int j = 0; j < NUMBER_RANGES; j++) // Pour chaque tranche de notes
+            {
+                printf("+-----");
+            }
+        }
+        else    // Si on est pas à l'étage 0 on affiche normalement
+        {
+            printf("%d >", i);      // On affiche le numéro de l'étage de manière jolie
+            for (int j = 0; j < (NUMBER_RANGES); j++)   // Pour chaque tranche de notes (responsive en fonction de NUMBER_RANGES afin de pouvoir facilement modifier le code pour avoir des tranches différentes)
+            {
+                if (notes[j] >= i) // Si il y a une note plus haute que la valeur de l'étage on affiche ##### sinon on affiche des espaces
+                {
+                    printf(" #####");
+                }
+                else
+                {
+                    printf("      ");
+                }
+            }
+            printf("\n");   // Nouvelle ligne pour passer à l'étage suivant (plus bas) 
+        }
+    }
+    printf("+\n   | 0-9 ");     // On fait un affichage spécifique pour la tranche 0-9 parce que c'est la seule qui a qu'un chifre pour chaque nombre (0 a un chiffre et 10 a deux chiffres)
+    for (int i = 1; i < NUMBER_RANGES - 1; i++)     // Pour les autres tranches on affiche |10-19 |20-29 etc... C'est fait automatiquement en fonction de NUMBER_RANGES
+    {
+        printf("|%d-%d", i * 10, i * 10 + 9);
+    }
+    printf("| %d  |\n", (NUMBER_RANGES-1)*10);        // 60 (ou autre) est un peu particulier donc on le met en dehors de la boucle
+    printf("------------------------------\n");
 }
 
 void stats(int points[], int *notes)
@@ -135,7 +173,7 @@ void stats(int points[], int *notes)
     printf("------------------------------\n");
     printf("La note maximale est: %d\n", getMaxPoints(points));
     printf("La note minimale est: %d\n", getMinPoints(points));
-    printf("La moyenne est: %d\n", getMoyenneNotes(points));
+    printf("La moyenne est: %d\n", getMoyennePoints(points));
     printf("------------------------------\n");
 }
 
@@ -175,6 +213,7 @@ int main()
     }
     stats(points, notes);   // On fait apparaitre quelques stats
     graphNuagePoint(notes); // On lance l'affichage du graphique
+    graphBatonPoint(notes); // On lance l'affichage du graphique
     free(notes); // On libere la mémoire
     return 0;
 }

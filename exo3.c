@@ -45,9 +45,13 @@ int lire_restaurant(char* chemin, Restaurant **restaurantsPtr) {
         const char* position = strtok(NULL, delimiter);
         const char* specialite = strtok(NULL, delimiter);
 
-        restaurants[index].nom_restaurant = malloc(sizeof(char) * strlen(nom));
-        restaurants[index].adresse_restaurant = malloc(sizeof(char) * strlen(adresse));
-        restaurants[index].specialite = malloc(sizeof(char) * strlen(specialite)); 
+        if (nom == NULL || adresse == NULL || position == NULL || specialite == NULL) {
+            continue; // pour passer les lignes vides ou incorrectes
+        }
+
+        restaurants[index].nom_restaurant = malloc(sizeof(char) * (strlen(nom) + 1));
+        restaurants[index].adresse_restaurant = malloc(sizeof(char) * (strlen(adresse) + 1));
+        restaurants[index].specialite = malloc(sizeof(char) * (strlen(specialite) + 1)); 
 
         strcpy(restaurants[index].nom_restaurant, nom);
         strcpy(restaurants[index].adresse_restaurant, adresse);
@@ -76,11 +80,12 @@ int inserer_restaurant(char* chemin, Restaurant restaurant) {
     fp = fopen(chemin, "a");
     if (fp == NULL)
         return 0;
-    // TODO Gérer le cas du manque de retour à la ligne à la fin du fichier
+
+    fprintf(fp, "\n");
     fprintf(fp, "%s; ", restaurant.nom_restaurant);
     fprintf(fp, "%s; ", restaurant.adresse_restaurant);
     fprintf(fp, "(x=%lf, y=%lf); ", restaurant.position_restaurant.pos_x, restaurant.position_restaurant.pos_y);
-    fprintf(fp, "{%s};\n", restaurant.specialite);
+    fprintf(fp, "{%s};", restaurant.specialite);
 
     fclose(fp);
     return 1;
@@ -116,6 +121,9 @@ int cherche_par_specialite(char* chemin, double x, double y, char* specialite[],
     double* resultDistances = malloc(len * sizeof(double));
     int resultsIndex=0;
 
+    if (nbSpecialites == 0)
+        return 0;
+
     for (int i = 0; i < len; ++i) {
         Restaurant restaurant = restaurants[i];
         
@@ -134,6 +142,9 @@ int cherche_par_specialite(char* chemin, double x, double y, char* specialite[],
             }
         }
     }
+
+    if (resultsIndex == 0)
+        return 0;
 
     // Tri par sélection
     size_t resultsLength = resultsIndex;
@@ -159,6 +170,7 @@ int cherche_par_specialite(char* chemin, double x, double y, char* specialite[],
 }
 
 void afficher_restaurants(Restaurant* restaurants, int len) {
+    printf("[Nom | Adresse | Position | Specialité]\n");
     for (int i = 0; i < len; ++i) {
         Restaurant restaurant = restaurants[i];
         printf("%s | %s | POS(X: %lf, Y: %lf) | %s\n", restaurant.nom_restaurant, restaurant.adresse_restaurant, 
@@ -166,11 +178,17 @@ void afficher_restaurants(Restaurant* restaurants, int len) {
     }
 }
 
-int consoleReadline(char* line, int len) {
-    fflush(stdin);
+int consoleReadline(char* line, int len, int flush) {
+    if (flush) { // alternative à fflush
+        int ch=0;
+        while((ch = getchar()) != '\n' && ch != EOF);
+    }
+
+    // fgets
     if (!fgets(line, len, stdin)) {
         return 0;
     }
+
     line[strcspn(line, "\n")] = 0;
     return 1;
 }
@@ -189,7 +207,7 @@ int prompt_specialites(char** specialitesPtr[]) {
     const size_t inputMaxLength = maxSpecialites * specialiteMaxLength 
         + maxSpecialites + 1; // inclure les virgules et le \0
     char* input=malloc(sizeof(char)*inputMaxLength); 
-    consoleReadline(input, specialiteMaxLength);
+    consoleReadline(input, specialiteMaxLength, 1);
 
     const char delimiter[2]=",";
     char* specialite = strtok(input, delimiter);
@@ -211,7 +229,7 @@ int main() {
 
     while (choice < 0 || choice > 4) {
         printf("Quel action effectuer ?\n"
-            "   1. Lire les restaurants d'un fichier\n"
+            "   1. Lire les restaurants du fichier\n"
             "   2. Ajouter un restaurant au fichier\n"
             "   3. Chercher un restaurant par position\n"
             "   4. Chercher un restaurant par spécialité\n"
@@ -222,12 +240,13 @@ int main() {
 
         switch (choice) {
             case 0:
-            return 0;
+                return 0;
             
             case 1: {
                 Restaurant* restaurants;
                 int len = lire_restaurant(chemin, &restaurants);
                 afficher_restaurants(restaurants, len);
+                free(restaurants);
             }
             break;
 
@@ -237,14 +256,14 @@ int main() {
                 double pos_x, pos_y;
 
                 printf("Nom du restaurant: ");
-                consoleReadline(inputNom, sizeof inputNom);
+                consoleReadline(inputNom, sizeof inputNom, 1);
                 printf("Adresse du restaurant: ");
-                consoleReadline(inputAdresse, sizeof inputAdresse);
+                consoleReadline(inputAdresse, sizeof inputAdresse, 0);
 
                 prompt_position(&pos_x, &pos_y);
 
                 printf("Spécialité du restaurant: ");
-                consoleReadline(inputSpecialite, sizeof inputSpecialite);
+                consoleReadline(inputSpecialite, sizeof inputSpecialite, 1);
 
                 // construction structure restaurant
                 Restaurant restaurant;
@@ -277,6 +296,7 @@ int main() {
                 scanf("%lf", &rayon);
                 int len = cherche_restaurant(chemin, x, y, rayon, &results);
                 afficher_restaurants(results, len);
+                free(results);
             }
             break;
 
@@ -288,11 +308,12 @@ int main() {
                 int nbSpecialites = prompt_specialites(&specialites);
                 int len = cherche_par_specialite(chemin, x, y, specialites, nbSpecialites, &results);
                 afficher_restaurants(results, len);
+                free(results);
             }
             break;
 
             default:
-                printf("Action incorrecte.\n");
+                printf("\nAction incorrecte.\n");
             break;
         }
     }
